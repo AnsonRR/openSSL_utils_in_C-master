@@ -16,9 +16,21 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
+/**
+ * @brief base64_encode
+ * @param input
+ * @param output
+ * @param in_length
+ */
+void base64_encode(const char * input, char** output,int in_length);
 
-void base64Encode(const char * input, char** output);
-void base64Decode(const char * input, char** output,int* out_size);
+/**
+ * @brief base64_decode
+ * @param input
+ * @param output
+ * @param out_length
+ */
+void base64_decode(const char * input, char** output,int* out_length);
 
 /**
  * AES-128-ECB，PKCS5Padding 加密

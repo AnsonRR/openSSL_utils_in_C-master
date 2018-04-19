@@ -1,8 +1,7 @@
 #include "utils.h"
 
-void base64Encode(const char * input, char** output)
+void base64_encode(const char * input,char** output,int in_length)
 {
-    int length = strlen(input);
     BIO* bmem = NULL;
     BIO* b64 = NULL;
     BUF_MEM* bptr = NULL;
@@ -10,7 +9,7 @@ void base64Encode(const char * input, char** output)
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bmem = BIO_new(BIO_s_mem());
     b64 = BIO_push(b64, bmem);
-    BIO_write(b64, input, length);
+    BIO_write(b64, input, in_length);
     BIO_flush(b64);
     BIO_get_mem_ptr(b64, &bptr);
     *output = (char *)malloc(bptr->length + 1);
@@ -19,7 +18,7 @@ void base64Encode(const char * input, char** output)
     BIO_free_all(b64);
 }
 
-void base64Decode(const char * input, char** output,int* out_size)
+void base64_decode(const char * input, char** output,int* out_length)
 {
     BIO* b64 = NULL;
     BIO* bio = NULL;
@@ -28,7 +27,7 @@ void base64Decode(const char * input, char** output,int* out_size)
     bio = BIO_new_mem_buf(input, strlen(input));
     bio = BIO_push(b64, bio);
     *output = (char*)malloc(strlen(input));
-    *out_size = BIO_read(bio, *output, strlen(input));
+    *out_length = BIO_read(bio, *output, strlen(input));
     BIO_free_all(bio);
 }
 
@@ -52,8 +51,8 @@ int encrypt_AES(const char* src,const char* key,char** dest)
     if (AES_set_encrypt_key((const unsigned char*)key, 128, &aes) < 0) {
         return -1;
     }
-    unsigned char* encrypt_string = (unsigned char*)malloc(nTotal+1);//encrypt buffer
-    memset(encrypt_string,0,nTotal+1);
+    unsigned char* encrypt_string = (unsigned char*)malloc(nTotal);//encrypt buffer
+    memset(encrypt_string,0,nTotal);
     int block = 0;
     while(block < nTotal){//循环加密
         AES_ecb_encrypt(enc_s + block, encrypt_string + block, &aes, AES_ENCRYPT);
@@ -61,7 +60,7 @@ int encrypt_AES(const char* src,const char* key,char** dest)
     }
     free(enc_s);
     char* base64;
-    base64Encode((const char*)encrypt_string,&base64);//BASE64 ENCODE
+    base64_encode((const char*)encrypt_string,&base64,nTotal);//BASE64 ENCODE
     *dest = (char*)malloc(sizeof(char)*(strlen(base64) + 1));
     memcpy(*dest,base64,strlen(base64));
     (*dest)[strlen(base64) + 1] = 0;
@@ -76,7 +75,7 @@ int decrypt_AES(const char* src,const char* key,char** dest)
     if(src_len == 0) return -1;
     char* dedata;
     int nTotal=0;
-    base64Decode(src,&dedata,&nTotal);//BASE64 DECODE
+    base64_decode(src,&dedata,&nTotal);//BASE64 DECODE
     if(nTotal == 0) return -1;
     AES_KEY aes;
     if (AES_set_decrypt_key((const unsigned char*)key, 128, &aes) < 0) {
